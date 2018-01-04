@@ -11,8 +11,8 @@ CONNECTION
 ----------
 Keyboard    ATMega32U4
 ----------------------
-Data:       PD2
-Clock:      PD5
+Data:       PD0
+Clock:      PD1
 
 And VCC and GND, of course. See RESOURCE for keyboard connector pin assign.
 
@@ -21,7 +21,7 @@ BUILD
 -----
 $ git clone https://github.com/tmk/tmk_keyboard.git
 $ cd converter/terminal_usb
-$ make 
+$ make
 
 
 RESOURCE
