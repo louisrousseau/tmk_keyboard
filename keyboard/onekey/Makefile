@@ -27,7 +27,7 @@
 # make flip-ee = Download the eeprom file to the device, using Atmel FLIP
 #                (must have Atmel FLIP installed).
 #
-# make debug = Start either simulavr or avarice as specified for debugging, 
+# make debug = Start either simulavr or avarice as specified for debugging,
 #              with avr-gdb or avr-insight as the front end for debugging.
 #
 # make filename.s = Just compile filename.c into the assembler code only.
@@ -116,10 +116,13 @@ CONSOLE_ENABLE = yes	# Console for debug(+400)
 #SLEEP_LED_ENABLE = yes  # Breathing sleep LED during USB suspend
 #NKRO_ENABLE = yes	# USB Nkey Rollover
 
-#PS2_MOUSE_ENABLE = yes  # PS/2 mouse(TrackPoint) support
+PS2_MOUSE_ENABLE = yes  # PS/2 mouse(TrackPoint) support
 #PS2_USE_BUSYWAIT = yes # uses primitive reference code
-#PS2_USE_INT = yes      # uses external interrupt for falling edge of PS/2 clock pin
+
+PS2_USE_INT = yes      # uses external interrupt for falling edge of PS/2 clock pin
 #PS2_USE_USART = yes     # uses hardware USART engine for PS/2 signal receive(recomened)
+
+PS2_MOUSE_DEBUG = yes  # PS/2 mouse(TrackPoint) support
 
 
 # Search Path
