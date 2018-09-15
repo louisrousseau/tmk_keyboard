@@ -27,11 +27,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    {{KC_A}},
+    {{KC_FN0}},
 };
 
 /*
  * Fn action definition
  */
 const action_t PROGMEM fn_actions[] = {
+  ACTION_MODS_KEY(MOD_LGUI, KC_L)
 };
