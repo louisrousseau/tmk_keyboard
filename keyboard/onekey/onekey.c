@@ -21,19 +21,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #include <stdbool.h>
 #include <avr/io.h>
+#include <util/delay.h>
+#include "print.h"
 #include "debug.h"
-#include "timer.h"
+#include "util.h"
 #include "matrix.h"
 
 
 #ifndef DEBOUNCE
 #   define DEBOUNCE	5
 #endif
+static uint8_t debouncing = DEBOUNCE;
+
 /* matrix state(1:on, 0:off) */
-static matrix_row_t row_debounced = 0;
-static matrix_row_t row_debouncing = 0;
-static bool debouncing = false;
-static uint16_t debouncing_time = 0;
+static matrix_row_t matrix[MATRIX_ROWS];
+static matrix_row_t matrix_debouncing[MATRIX_ROWS];
+
+static matrix_row_t read_cols(void);
+static void init_cols(void);
+static void unselect_rows(void);
+static void select_row(uint8_t row);
 
 
 void matrix_init(void)
@@ -42,29 +49,84 @@ void matrix_init(void)
     debug_matrix = true;
     debug_mouse = true;
 
-    // PB0: Input with pull-up(DDR:0, PORT:1)
-    DDRB  &= ~(1<<0);
-    PORTB |=  (1<<0);
+    // initialize row and col
+    unselect_rows();
+    init_cols();
+
+    // initialize matrix state: all keys off
+    for (uint8_t i=0; i < MATRIX_ROWS; i++) {
+        matrix[i] = 0;
+        matrix_debouncing[i] = 0;
+    }
 }
 
 uint8_t matrix_scan(void)
 {
-    matrix_row_t r = (PINB&(1<<0) ? 0 : 1);
-    if (row_debouncing != r) {
-        row_debouncing = r;
-        debouncing = true;
-        debouncing_time = timer_read();
-    }
+  for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
+      select_row(i);
+      _delay_us(30);  // without this wait read unstable value.
+      matrix_row_t cols = read_cols();
+      if (matrix_debouncing[i] != cols) {
+          matrix_debouncing[i] = cols;
+          if (debouncing) {
+              debug("bounce!: "); debug_hex(debouncing); debug("\n");
+          }
+          debouncing = DEBOUNCE;
+      }
+      unselect_rows();
+  }
 
-    if (debouncing && timer_elapsed(debouncing_time) > DEBOUNCE) {
-        row_debounced = row_debouncing;
-        debouncing = false;
-    }
-    return 1;
+  if (debouncing) {
+      if (--debouncing) {
+          _delay_ms(1);
+      } else {
+          for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
+              matrix[i] = matrix_debouncing[i];
+          }
+      }
+  }
+
+  return 1;
 }
 
 inline
 matrix_row_t matrix_get_row(uint8_t row)
 {
-    return row_debounced;
+  return matrix[row];
+}
+
+static void init_cols(void)
+{
+    // Using pin B5
+    // Input with pull-up(DDR:0, PORT:1)
+    DDRB  &= ~0b00100000;
+    PORTB |=  0b00100000;
+}
+
+/* Returns status of switches(1:on, 0:off) */
+static matrix_row_t read_cols(void)
+{
+    // Invert because PIN indicates 'switch on' with low(0) and 'off' with high(1)
+    // B5 is column 0
+    return (~PINB & 0b00100000)>>5;
+}
+
+static void unselect_rows(void)
+{
+    // Hi-Z(DDR:0, PORT:0) to unselect
+    // Using pin B6
+    DDRB  &= ~0b01000000;
+    PORTB &= ~0b01000000;
+}
+
+static void select_row(uint8_t row)
+{
+    // Output low(DDR:1, PORT:0) to select
+    switch (row) {
+        case 0:
+            DDRB  |= (1<<6);
+            PORTB &= ~(1<<6);
+            break;
+
+    }
 }
